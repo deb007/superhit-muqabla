@@ -5,6 +5,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 import re
+import urllib.parse
 from datetime import datetime
 
 def scrape_billboard_india():
@@ -189,49 +190,141 @@ def scrape_billboard_alternative(soup):
 
 def create_html_table(songs_data):
     """
-    Create an HTML table from the songs data
+    Create an HTML table from the songs data with Billboard-style design
     """
     if not songs_data:
         return "<p>❌ No chart data available. The website structure may have changed.</p>"
     
+    # URL encode function for search queries
+    def url_encode(text):
+        import urllib.parse
+        return urllib.parse.quote(text)
+    
     html = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
-        <h2 style="color: #d41367; text-align: center;">🎵 Billboard India Songs - Hot This Week (Top {len(songs_data)})</h2>
-        <p style="text-align: center; color: #666; margin-bottom: 20px;">Chart Date: {datetime.now().strftime("%B %d, %Y")}</p>
-        <table border="1" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            <thead style="background-color: #d41367; color: white;">
-                <tr>
-                    <th style="padding: 12px; text-align: center; width: 10%;">Rank</th>
-                    <th style="padding: 12px; text-align: left; width: 45%;">Song</th>
-                    <th style="padding: 12px; text-align: left; width: 35%;">Artist</th>
-                    <th style="padding: 12px; text-align: center; width: 10%;">Last Week</th>
-                </tr>
-            </thead>
-            <tbody>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 900px; margin: 0 auto; background: #ffffff;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #d41367, #ff1744); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Billboard</h1>
+            <h2 style="color: white; margin: 10px 0 0 0; font-size: 24px; font-weight: 400; opacity: 0.95;">India Songs</h2>
+            <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 16px;">Hot This Week • Chart Date: {datetime.now().strftime("%B %d, %Y")}</p>
+        </div>
+        
+        <!-- Chart Table -->
+        <div style="background: #ffffff; border-radius: 0 0 8px 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+            <table style="width: 100%; border-collapse: collapse; font-family: inherit;">
+                <thead style="background: #f8f9fa; border-bottom: 2px solid #e9ecef;">
+                    <tr>
+                        <th style="padding: 16px 12px; text-align: center; width: 60px; font-weight: 700; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Rank</th>
+                        <th style="padding: 16px 20px; text-align: left; font-weight: 700; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Song</th>
+                        <th style="padding: 16px 20px; text-align: left; width: 220px; font-weight: 700; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Artist</th>
+                        <th style="padding: 16px 12px; text-align: center; width: 80px; font-weight: 700; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Last<br>Week</th>
+                    </tr>
+                </thead>
+                <tbody>
     """
     
     for i, song in enumerate(songs_data):
-        row_color = "#f9f9f9" if i % 2 == 0 else "#ffffff"
-        position_color = "#d41367" if song['Position'] <= 3 else "#333"
+        # Alternate row colors like Billboard
+        row_bg = "#ffffff" if i % 2 == 0 else "#f8f9fa"
+        
+        # Position styling - Billboard uses pink/red for top positions
+        if song['Position'] == 1:
+            position_bg = "#d41367"
+            position_color = "white"
+            position_style = f"background: {position_bg}; color: {position_color}; font-weight: 800; border-radius: 50%; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px;"
+        elif song['Position'] <= 5:
+            position_bg = "#ff6b9d"
+            position_color = "white"
+            position_style = f"background: {position_bg}; color: {position_color}; font-weight: 700; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;"
+        elif song['Position'] <= 10:
+            position_bg = "#6c757d"
+            position_color = "white"
+            position_style = f"background: {position_bg}; color: {position_color}; font-weight: 600; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;"
+        else:
+            position_style = f"color: #495057; font-weight: 600; font-size: 16px;"
+        
+        # Last week indicator styling
+        if song['Last Week'] == 'NEW':
+            lw_style = "background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;"
+            lw_text = "NEW"
+        elif song['Last Week'].isdigit():
+            current_pos = song['Position']
+            last_pos = int(song['Last Week'])
+            if current_pos < last_pos:
+                # Moved up
+                lw_style = "color: #28a745; font-weight: 600; font-size: 13px;"
+                lw_text = f"▲ {song['Last Week']}"
+            elif current_pos > last_pos:
+                # Moved down  
+                lw_style = "color: #dc3545; font-weight: 600; font-size: 13px;"
+                lw_text = f"▼ {song['Last Week']}"
+            else:
+                # No change
+                lw_style = "color: #6c757d; font-weight: 500; font-size: 13px;"
+                lw_text = f"— {song['Last Week']}"
+        else:
+            lw_style = "color: #6c757d; font-weight: 400; font-size: 12px;"
+            lw_text = song['Last Week']
+        
+        # Create search URLs
+        search_query = f"{song['Song']} {song['Artist']}"
+        google_search_url = f"https://www.google.com/search?q={url_encode(search_query)}"
+        spotify_search_url = f"https://open.spotify.com/search/{url_encode(search_query)}"
         
         html += f"""
-            <tr style="background-color: {row_color};">
-                <td style="padding: 10px; text-align: center; font-weight: bold; color: {position_color};">{song['Position']}</td>
-                <td style="padding: 10px;"><strong style="color: #333;">{song['Song']}</strong></td>
-                <td style="padding: 10px; color: #666;">{song['Artist']}</td>
-                <td style="padding: 10px; text-align: center; color: #888;">{song['Last Week']}</td>
+            <tr style="background: {row_bg}; border-bottom: 1px solid #e9ecef; transition: background-color 0.2s ease;">
+                <td style="padding: 16px 12px; text-align: center; vertical-align: middle;">
+                    <span style="{position_style}">{song['Position']}</span>
+                </td>
+                <td style="padding: 16px 20px; vertical-align: middle;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="flex-grow: 1;">
+                            <div style="font-size: 16px; font-weight: 600; color: #212529; line-height: 1.3; margin-bottom: 2px;">
+                                {song['Song']}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                            <a href="{google_search_url}" target="_blank" style="display: inline-block; padding: 6px; border-radius: 4px; background: #f8f9fa; border: 1px solid #dee2e6; text-decoration: none; transition: all 0.2s ease;" title="Search on Google">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                </svg>
+                            </a>
+                            <a href="{spotify_search_url}" target="_blank" style="display: inline-block; padding: 6px; border-radius: 4px; background: #1db954; border: 1px solid #1db954; text-decoration: none; transition: all 0.2s ease;" title="Search on Spotify">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </td>
+                <td style="padding: 16px 20px; vertical-align: middle;">
+                    <div style="color: #6c757d; font-size: 15px; font-weight: 500; line-height: 1.3;">
+                        {song['Artist']}
+                    </div>
+                </td>
+                <td style="padding: 16px 12px; text-align: center; vertical-align: middle;">
+                    <span style="{lw_style}">{lw_text}</span>
+                </td>
             </tr>
         """
     
     html += f"""
-            </tbody>
-        </table>
-        <p style="text-align: center; color: #888; font-size: 12px; margin-top: 20px;">
-            <em>Data scraped from Billboard.com • Generated on {datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")}</em>
-        </p>
-        <p style="text-align: center; color: #666; font-size: 11px;">
-            <strong>Source:</strong> <a href="https://www.billboard.com/charts/india-songs-hotw/" style="color: #d41367;">Billboard India Songs - Hot This Week</a>
-        </p>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Footer -->
+        <div style="padding: 20px; text-align: center; background: #f8f9fa; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
+            <p style="margin: 0; color: #6c757d; font-size: 13px;">
+                <strong>Source:</strong> <a href="https://www.billboard.com/charts/india-songs-hotw/" style="color: #d41367; text-decoration: none;">Billboard India Songs - Hot This Week</a>
+            </p>
+            <p style="margin: 8px 0 0 0; color: #adb5bd; font-size: 12px;">
+                Generated on {datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")} • Click the icons next to song titles to search
+            </p>
+        </div>
     </div>
     """
     
@@ -262,34 +355,12 @@ def send_email(songs_data):
         msg['To'] = recipient_email
         msg['Subject'] = f"🎵 Billboard India Hot Songs - Top {len(songs_data)} ({datetime.now().strftime('%B %d, %Y')})"
         
-        # Create HTML content
+        # Create HTML content only (no text version)
         html_content = create_html_table(songs_data)
         
-        # Create plain text version
-        text_content = f"🎵 Billboard India Songs - Hot This Week (Top {len(songs_data)})\n"
-        text_content += f"Chart Date: {datetime.now().strftime('%B %d, %Y')}\n\n"
-        text_content += "=" * 70 + "\n"
-        
-        for song in songs_data:
-            text_content += f"{song['Position']:2d}. {song['Song']}\n"
-            text_content += f"    Artist: {song['Artist']}\n"
-            if song['Last Week'] != 'NEW':
-                text_content += f"    Last Week: #{song['Last Week']}\n"
-            else:
-                text_content += f"    Last Week: NEW\n"
-            text_content += "\n"
-        
-        text_content += "=" * 70 + "\n"
-        text_content += f"Source: Billboard India Songs - Hot This Week\n"
-        text_content += f"URL: https://www.billboard.com/charts/india-songs-hotw/\n"
-        text_content += f"Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
-        
-        # Attach parts
-        part1 = MIMEText(text_content, 'plain')
-        part2 = MIMEText(html_content, 'html')
-        
-        msg.attach(part1)
-        msg.attach(part2)
+        # Attach HTML part only
+        html_part = MIMEText(html_content, 'html')
+        msg.attach(html_part)
         
         # Send email
         print(f"📧 Connecting to {smtp_server}:{smtp_port}")
