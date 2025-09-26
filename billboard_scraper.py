@@ -263,16 +263,12 @@ def create_html_table(songs_data):
             <td style="padding: 10px; border: 1px solid #ddd; text-align: left;">
               {song['Song']}
               <div style="display: flex; gap: 10px; margin-top: 8px;">
-                <a href="https://www.google.com" target="_blank" 
-                   style="text-decoration: none; background:#fff; color:#000; font-weight:bold; 
-                          border-radius: 50%; width:30px; height:30px; display:flex; 
-                          align-items:center; justify-content:center; box-shadow:0 0 4px rgba(0,0,0,0.3);">
+                <a href="{google_url}" target="_blank" 
+                   style="text-decoration:none;background:#fff;color:#000;font-weight:bold;border-radius:50%;width:30px;height:30px;display:inline-block;text-align:center;line-height:30px;margin-left: 6px;">
                   G
                 </a>
-                <a href="https://www.spotify.com" target="_blank" 
-                   style="text-decoration: none; background:#1DB954; color:#fff; font-weight:bold; 
-                          border-radius: 50%; width:30px; height:30px; display:flex; 
-                          align-items:center; justify-content:center; box-shadow:0 0 4px rgba(0,0,0,0.3);">
+                <a href="{spotify_url}" target="_blank" 
+                   style="text-decoration:none;background:#1db954;color:#fff;font-weight:bold;border-radius:50%;width:30px;height:30px;display:inline-block;text-align:center;line-height:30px;margin-left: 6px;">
                   S
                 </a>
               </div>
