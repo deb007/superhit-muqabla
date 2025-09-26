@@ -260,19 +260,22 @@ def create_html_table(songs_data):
             <td align="center" style="padding:10px; border-bottom:1px solid #e9ecef;">
               <span style="{bubble_style}">{song['Position']}</span>
             </td>
-            <td style="padding:10px; border-bottom:1px solid #e9ecef; font-size:14px; color:#212529;">
+            <td style="padding: 10px; border: 1px solid #ddd; text-align: left;">
               {song['Song']}
-              &nbsp;
-              <a href="{google_url}" target="_blank" style="color:#4285F4; text-decoration:none;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26..."/>
-                </svg>
-              </a>
-              <a href="{spotify_url}" target="_blank" style="color:#1db954; text-decoration:none;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.4 0 0 5.4 0 12s5.4..."/>
-                </svg>
-              </a>
+              <div style="display: flex; gap: 10px; margin-top: 8px;">
+                <a href="https://www.google.com" target="_blank" 
+                   style="text-decoration: none; background:#fff; color:#000; font-weight:bold; 
+                          border-radius: 50%; width:30px; height:30px; display:flex; 
+                          align-items:center; justify-content:center; box-shadow:0 0 4px rgba(0,0,0,0.3);">
+                  G
+                </a>
+                <a href="https://www.spotify.com" target="_blank" 
+                   style="text-decoration: none; background:#1DB954; color:#fff; font-weight:bold; 
+                          border-radius: 50%; width:30px; height:30px; display:flex; 
+                          align-items:center; justify-content:center; box-shadow:0 0 4px rgba(0,0,0,0.3);">
+                  S
+                </a>
+              </div>
             </td>
             <td style="padding:10px; border-bottom:1px solid #e9ecef; font-size:13px; color:#6c757d;">
               {song['Artist']}
